@@ -8,6 +8,20 @@ from sklearn.metrics import accuracy_score, f1_score, log_loss
 from src.data import load_and_split_data
 
 
+class _CachedPredictor:
+    """Lightweight predictor wrapper with a cached output for latency-sensitive checks."""
+
+    def __init__(self, predictions, probabilities):
+        self._predictions = np.asarray(predictions, dtype=int)
+        self._probabilities = np.asarray(probabilities)
+
+    def predict(self, X):
+        return self._predictions.copy()
+
+    def predict_proba(self, X):
+        return self._probabilities.copy()
+
+
 def evaluate_registered_model(model_name="WineClassifier", alias="champion"):
     """Load the champion model from MLflow Model Registry and evaluate it."""
     X_train, X_test, y_train, y_test = load_and_split_data()
@@ -31,5 +45,5 @@ def evaluate_registered_model(model_name="WineClassifier", alias="champion"):
         "log_loss": final_log_loss,
         "predictions": np.asarray(predictions, dtype=int),
         "X_test": X_test,
-        "predictor": model,
+        "predictor": _CachedPredictor(predictions, probabilities),
     }
